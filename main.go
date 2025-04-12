@@ -126,7 +126,6 @@ func main() {
 		textInput: createInput(),
 	}
 	m.board.secret = dailySecret()
-	m.board.secret = "1243ff"
 
 	p := tea.NewProgram(m)
 	if _, err := p.Run(); err != nil {
