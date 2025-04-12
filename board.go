@@ -57,7 +57,7 @@ func (c board) gradeMove(move string) []string {
 			continue
 		}
 		for i, m := range move {
-			if m == s && grade[i] != Yellow {
+			if m == s && grade[i] == Gray {
 				grade[i] = Yellow
 				break
 			}
