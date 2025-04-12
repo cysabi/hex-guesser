@@ -1,70 +1,94 @@
 package main
 
 import (
-	"strings"
+	"slices"
+
+	"github.com/charmbracelet/lipgloss"
 )
 
-type Cell struct {
-	Empty string
-	Wall  string
-}
-
 type board struct {
-	cells      []string
-	boardWidth int
+	secret string
+	tries  []string
 }
 
-func (c *board) init(w, h int) {
-	if w == 0 {
-		return
+type State int
+
+const (
+	Idle State = iota
+	Invalid
+	Win
+)
+
+func (c *board) submit(move string) State {
+	if len(move) != 6 {
+		return Invalid
 	}
-	c.boardWidth = w
-	c.cells = make([]string, w*h)
-	c.wipe()
-}
-
-func (c board) get(x, y int) string {
-	i := y*c.boardWidth + x
-	if i > len(c.cells)-1 || x < 0 || y < 0 || x >= c.width() || y >= c.height() {
-		return " "
+	if c.secret == move {
+		return Win
 	}
-	return c.cells[i]
+	grade := c.gradeMove(move)
+	c.tries = append(c.tries, gradeDisplay(grade, move))
+	return Idle
 }
 
-func (c *board) set(x, y int, v string) {
-	i := y*c.boardWidth + x
-	if i > len(c.cells)-1 || x < 0 || y < 0 || x >= c.width() || y >= c.height() {
-		return
+type Grade string
+
+const (
+	Green  = "2"
+	Yellow = "3"
+	Gray   = "8"
+)
+
+func (c board) gradeMove(move string) []string {
+	grade := make([]string, len(move))
+	secret := []rune(c.secret)
+
+	for i, s := range secret {
+		if s == []rune(move)[i] {
+			grade[i] = Green
+			secret[i] = ' '
+		} else {
+			grade[i] = Gray
+		}
 	}
-	c.cells[i] = v
-}
 
-func (c *board) wipe() {
-	for i := range c.cells {
-		c.cells[i] = " "
+	for _, s := range secret {
+		if s == ' ' {
+			continue
+		}
+		for i, m := range move {
+			if m == s && grade[i] != Yellow {
+				grade[i] = Yellow
+				break
+			}
+		}
 	}
+
+	return grade
 }
 
-func (c board) width() int {
-	return c.boardWidth
-}
+func gradeDisplay(grade []string, move string) string {
+	display := ""
 
-func (c board) height() int {
-	h := len(c.cells) / c.boardWidth
-	if len(c.cells)%c.boardWidth != 0 {
-		h++
+	for i, g := range grade {
+		display = display + lipgloss.NewStyle().Foreground(lipgloss.Color(g)).Render(string(move[i]))
 	}
-	return h
+
+	return lipgloss.NewStyle().MarginTop(1).Render(
+		lipgloss.JoinHorizontal(0,
+			colorBoxStyle.Background(lipgloss.Color("#"+move)).Render(),
+			display,
+		))
 }
 
-func (c board) ready() bool {
-	return len(c.cells) > 0
-}
+var colorBoxStyle = lipgloss.NewStyle().Width(2).Height(1).Margin(0, 1)
 
-func (c board) String() string {
-	var b strings.Builder
-	for i := 0; i < len(c.cells); i++ {
-		b.WriteString(c.cells[i])
-	}
-	return b.String()
+func (c board) View() string {
+	tries := slices.Clone(c.tries)
+	slices.Reverse(tries)
+	return lipgloss.NewStyle().Padding(0, 2, 0, 1).Render(
+		lipgloss.JoinVertical(0,
+			tries...,
+		),
+	)
 }
