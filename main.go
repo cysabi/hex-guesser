@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	host = "disco.rcdis.co"
+	host = "0.0.0.0"
 	port = "22"
 )
 
