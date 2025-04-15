@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "services": {
+    "receiver": {
+      "command": "go run .",
+      "publishedPorts": [
+        {
+          "publishedAs": 22,
+          "fromContainerPort": 22,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  }
+}
