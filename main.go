@@ -1,135 +1,79 @@
 package main
 
 import (
-	"encoding/hex"
-	"fmt"
-	"math/rand"
+	"context"
+	"errors"
+	"net"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/log"
+	"github.com/charmbracelet/ssh"
+	"github.com/charmbracelet/wish"
+	"github.com/charmbracelet/wish/activeterm"
+	"github.com/charmbracelet/wish/bubbletea"
+	"github.com/charmbracelet/wish/logging"
 )
 
-func createInput() textinput.Model {
-	ti := textinput.New()
-	ti.CharLimit = 6
-	ti.Width = 6
-	ti.Prompt = ""
-	ti.Focus()
-	return ti
-}
+const (
+	host = "localhost"
+	port = "22"
+)
 
-func filterHex(s string) string {
-	var result []rune
-	for _, r := range s {
-		if (r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F') {
-			result = append(result, r)
-		}
-	}
-	return string(result)
-}
+var names = make(Names)
 
-func dailySecret() string {
-	random := rand.New(rand.NewSource((time.Now().Unix() / (60 * 60 * 24))))
+type Names map[string](string)
 
-	secret := make([]byte, 3)
+var memory = make(Memory)
 
-	random.Read(secret)
-	return hex.EncodeToString(secret)
-}
+type Memory map[int64](History)
+type History map[string]([]Try)
 
-func stateToStyle(m model) (string, string) {
-	if m.state == Invalid {
-		return "9", "invalid hex!"
-	} else if m.state == Win {
-		return "10", fmt.Sprintf("you got it! (%d turns)", len(m.board.tries)+1)
-	} else {
-		return "0", ""
-	}
-}
+func teaHandler(s ssh.Session) (tea.Model, []tea.ProgramOption) {
+	renderer := bubbletea.MakeRenderer(s)
 
-// model
-
-type model struct {
-	state     State
-	textInput textinput.Model
-	board     board
-	wsize     tea.WindowSizeMsg
-}
-
-func (m model) Init() tea.Cmd {
-	return nil
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if m.state == Win {
-			return m, tea.Quit
-		}
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
-
-		case tea.KeyEnter:
-
-			m.state = m.board.submit(m.textInput.Value())
-
-			if m.state == Win {
-				m.textInput.Blur()
-			}
-			if m.state == Idle {
-				m.textInput.SetValue("")
-			}
-		default:
-			if m.state == Invalid {
-				m.state = Idle
-			}
-		}
-
-	case tea.WindowSizeMsg:
-		m.wsize = msg
-		return m, nil
-	}
-
-	m.textInput, cmd = m.textInput.Update(msg)
-	m.textInput.SetValue(strings.ToLower(filterHex(m.textInput.Value())))
-
-	return m, cmd
-}
-
-func (m model) View() string {
-	stateAnsi, stateMsg := stateToStyle(m)
-	return lipgloss.NewStyle().Padding(1, 0).Render(lipgloss.JoinVertical(0,
-		lipgloss.JoinHorizontal(lipgloss.Center,
-			lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color(stateAnsi)).Render(
-				lipgloss.JoinHorizontal(0,
-					colorBoxStyle.Background(lipgloss.Color("#"+m.board.secret)).Render(),
-					m.textInput.View(),
-				),
-			),
-			lipgloss.NewStyle().Foreground(lipgloss.Color(stateAnsi)).MarginLeft(1).Italic(false).Render(stateMsg),
-		),
-		m.board.View(),
-	))
-}
-
-// main
-func main() {
 	m := model{
-		state:     Idle,
-		textInput: createInput(),
-	}
-	m.board.secret = dailySecret()
+		PlayerId: strings.Split(s.RemoteAddr().String(), ":")[0],
+		Styles:   Styles{}.New(renderer),
+	}.New()
 
-	p := tea.NewProgram(m)
-	if _, err := p.Run(); err != nil {
-		fmt.Println("Uh oh:", err)
-		os.Exit(1)
+	return m, []tea.ProgramOption{tea.WithAltScreen()}
+}
+
+func main() {
+
+	s, err := wish.NewServer(
+		wish.WithAddress(net.JoinHostPort(host, port)),
+		wish.WithHostKeyPath(".ssh/id_ed25519"),
+		wish.WithMiddleware(
+			bubbletea.Middleware(teaHandler),
+			activeterm.Middleware(), // Bubble Tea apps usually require a PTY.
+			logging.Middleware(),
+		),
+	)
+	if err != nil {
+		log.Error("Could not start server", "error", err)
+	}
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	log.Info("Starting SSH server", "host", host, "port", port)
+	go func() {
+		if err = s.ListenAndServe(); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
+			log.Error("Could not start server", "error", err)
+			done <- nil
+		}
+	}()
+
+	<-done
+	log.Info("Stopping SSH server")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer func() { cancel() }()
+	if err := s.Shutdown(ctx); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
+		log.Error("Could not stop server", "error", err)
 	}
 }
