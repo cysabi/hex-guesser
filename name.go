@@ -6,11 +6,12 @@ import (
 )
 
 type Name struct {
-	Form *huh.Form // huh.Form is just a tea.Model
+	Value string
+	Form  *huh.Form // huh.Form is just a tea.Model
 }
 
 func (m Name) New() Name {
-	input := huh.NewInput().Key("name").Description("enter name")
+	input := huh.NewInput().Key("name").Description("enter name").Placeholder(m.Value)
 	input.Focus()
 	return Name{
 		Form: huh.NewForm(

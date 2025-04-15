@@ -11,11 +11,12 @@ import (
 )
 
 type Game struct {
-	Secret string
-	Tries  []Try
-	input  textinput.Model
-	State  GameState
-	Styles Styles
+	Secret   string
+	Day      int64
+	PlayerId string
+	input    textinput.Model
+	State    GameState
+	Styles   Styles
 }
 
 func (game Game) New() Game {
@@ -56,7 +57,7 @@ func (game Game) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else if game.Secret == move {
 				game.State = Win
 			} else {
-				game.Tries = append(game.Tries, Try{move: move}.New(game.Secret))
+				memory.AppendTry(game.Day, game.PlayerId, Try{move: move}.New(game.Secret))
 				game.State = Idle
 			}
 
@@ -89,10 +90,10 @@ func (game Game) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (g Game) View() string {
-	tries := slices.Clone(g.Tries)
+	tries := slices.Clone(memory.GetDay(g.Day)[g.PlayerId])
 	slices.Reverse(tries)
 
-	display := make([]string, len(g.Tries))
+	display := make([]string, len(memory.GetDay(g.Day)[g.PlayerId]))
 	for i, t := range tries {
 		display[i] = t.View(g.Styles)
 	}
@@ -119,7 +120,7 @@ func (game Game) StateMsg() string {
 	if game.State == Invalid {
 		return "invalid hex!"
 	} else if game.State == Win {
-		return fmt.Sprintf("you got it! (%d turns)", len(game.Tries)+1)
+		return fmt.Sprintf("you got it! (%d turns)", len(memory.GetDay(game.Day)[game.PlayerId])+1)
 	}
 	return ""
 }

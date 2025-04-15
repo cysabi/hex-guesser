@@ -21,7 +21,6 @@ const (
 type model struct {
 	PlayerId string
 	State    Screen
-	Memory   Memory
 	Day      int64
 	Title    Title
 	Game     Game
@@ -35,9 +34,10 @@ func (m model) New() model {
 	m.Day = day()
 	m.Title = Title{}.New()
 	m.Game = Game{
-		Secret: secret(m.Day),
-		Tries:  m.Memory[m.Day][m.PlayerId],
-		Styles: m.Styles,
+		Secret:   secret(m.Day),
+		Day:      m.Day,
+		PlayerId: m.PlayerId,
+		Styles:   m.Styles,
 	}
 	m.Name = Name{}
 	return m
@@ -105,6 +105,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 
 		if m.Name.Form.State == huh.StateCompleted {
+			m.Name.Value = m.Name.Form.Get("name").(string)
 			m.State = TitleScreen
 			m.Title = Title{}.New()
 		}

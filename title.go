@@ -29,7 +29,6 @@ func (m Title) Init() tea.Cmd {
 }
 
 func (m Title) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-
 	form, cmd := m.Form.Update(msg)
 	if f, ok := form.(*huh.Form); ok {
 		m.Form = f

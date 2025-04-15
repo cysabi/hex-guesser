@@ -24,24 +24,40 @@ const (
 	port = "22"
 )
 
-var names = make(Names)
+// var names = make(Names)
+// type Names map[string](string)
 
-type Names map[string](string)
+type Memory struct {
+	names map[string]string
+	board map[int64]map[string][]Try
+}
 
-var memory = make(Memory)
+func (m Memory) GetDay(day int64) map[string][]Try {
+	players, ok := m.board[day]
+	if !ok {
+		m.board[day] = map[string][]Try{}
+		players = m.board[day]
+	}
+	return players
+}
 
-type Memory map[int64](History)
-type History map[string]([]Try)
+func (m *Memory) AppendTry(day int64, playerid string, try Try) {
+	players := m.GetDay(day)
+	players[playerid] = append(players[playerid], try)
+	m.board[day] = players
+}
+
+var memory = &Memory{names: map[string]string{}, board: map[int64]map[string][]Try{}}
 
 func myCustomBubbleteaMiddleware() wish.Middleware {
 	newProg := func(m tea.Model, opts ...tea.ProgramOption) *tea.Program {
 		p := tea.NewProgram(m, opts...)
-		go func() {
-			for {
-				<-time.After(1 * time.Second)
-				p.Send(time.Now())
-			}
-		}()
+		// go func() {
+		// 	for {
+		// 		<-time.After(1 * time.Second)
+		// 		p.Send(time.Now())
+		// 	}
+		// }()
 		return p
 	}
 	teaHandler := func(s ssh.Session) *tea.Program {
