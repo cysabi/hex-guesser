@@ -6,15 +6,16 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/huh"
 )
 
-type Screen int
+type Screen string
 
 const (
-	Off Screen = iota
-	TitleScreen
-	PlayScreen
-	LeaderboardScreen
+	TitleScreen       Screen = "back to title"
+	PlayScreen        Screen = "play today!"
+	NameScreen        Screen = "change name"
+	LeaderboardScreen Screen = "see leaderboard"
 )
 
 type model struct {
@@ -24,6 +25,7 @@ type model struct {
 	Day      int64
 	Title    Title
 	Game     Game
+	Name     Name
 	Styles   Styles
 	wsize    tea.WindowSizeMsg
 }
@@ -37,7 +39,25 @@ func (m model) New() model {
 		Tries:  m.Memory[m.Day][m.PlayerId],
 		Styles: m.Styles,
 	}
+	m.Name = Name{}
 	return m
+}
+
+func day() int64 {
+	loc, _ := time.LoadLocation("America/New_York")
+	now := time.Now().In(loc)
+
+	adjusted := now.Add(-11 * time.Hour)
+
+	dayNumber := adjusted.Unix() / (60 * 60 * 24)
+	return dayNumber
+}
+
+func secret(day int64) string {
+	random := rand.New(rand.NewSource(day))
+	secret := make([]byte, 3)
+	random.Read(secret)
+	return hex.EncodeToString(secret)
 }
 
 func (m model) Init() tea.Cmd {
@@ -67,6 +87,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		cmds = append(cmds, cmd)
 
+		if m.Title.Form.State == huh.StateCompleted {
+			m.State = m.Title.Form.Get("screen").(Screen)
+			if m.State == PlayScreen {
+				m.Game = m.Game.New()
+			}
+			if m.State == NameScreen {
+				m.Name = m.Name.New()
+			}
+		}
+
+	case NameScreen:
+		name, cmd := m.Name.Update(msg)
+		if t, ok := name.(Name); ok {
+			m.Name = t
+		}
+		cmds = append(cmds, cmd)
+
+		if m.Name.Form.State == huh.StateCompleted {
+			m.State = TitleScreen
+			m.Title = Title{}.New()
+		}
+
 	case PlayScreen:
 		game, cmd := m.Game.Update(msg)
 		if g, ok := game.(Game); ok {
@@ -86,25 +128,10 @@ func (m model) View() string {
 		return m.Title.View()
 	case PlayScreen:
 		return m.Game.View()
+	case NameScreen:
+		return m.Name.View()
 	case LeaderboardScreen:
 		return "leaderboard"
 	}
 	return ""
-}
-
-func day() int64 {
-	loc, _ := time.LoadLocation("America/New_York")
-	now := time.Now().In(loc)
-
-	adjusted := now.Add(-11 * time.Hour)
-
-	dayNumber := adjusted.Unix() / (60 * 60 * 24)
-	return dayNumber
-}
-
-func secret(day int64) string {
-	random := rand.New(rand.NewSource(day))
-	secret := make([]byte, 3)
-	random.Read(secret)
-	return hex.EncodeToString(secret)
 }
