@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -50,6 +53,33 @@ func (m *Memory) AppendTry(day int64, playerid string, try Try) {
 
 var memory = &Memory{names: map[string]string{}, board: map[int64]map[string][]Try{}}
 
+type state struct {
+	day       int64
+	secret    string
+	playerid  string
+	height    int
+	width     int
+	gameState GameState
+	screen    Screen
+	styles    Styles
+}
+
+type GameState string
+
+const (
+	Idle    GameState = "0"
+	Invalid GameState = "9"
+	Win     GameState = "10"
+)
+
+type Screen string
+
+const (
+	TitleScreen Screen = "back to title"
+	PlayScreen  Screen = "play today!"
+	BoardScreen Screen = "see leaderboard"
+)
+
 func main() {
 	db, err := buntdb.Open("data.json")
 	if err != nil {
@@ -64,16 +94,25 @@ func main() {
 			bubbletea.Middleware(func(s ssh.Session) (tea.Model, []tea.ProgramOption) {
 				pty, _, _ := s.Pty()
 
-				renderer := bubbletea.MakeRenderer(s)
-
+				day := day()
+				secret := secret(day)
 				playerId := strings.Split(s.RemoteAddr().String(), ":")[0]
 
-				m := model{
-					PlayerId: playerId,
-					Styles:   Styles{}.New(renderer),
-					Height:   pty.Window.Height,
-					Width:    pty.Window.Width,
-				}.New()
+				renderer := bubbletea.MakeRenderer(s)
+
+				state := state{
+					day:       day,
+					secret:    secret,
+					playerid:  playerId,
+					height:    pty.Window.Height,
+					width:     pty.Window.Width,
+					gameState: Idle,
+					screen:    TitleScreen,
+					styles:    Styles{}.New(renderer, secret),
+				}
+
+				m := Model{state: &state}.New()
+
 				return m, []tea.ProgramOption{tea.WithAltScreen()}
 			}),
 			activeterm.Middleware(),
@@ -101,4 +140,20 @@ func main() {
 	if err := s.Shutdown(ctx); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
 		log.Error("Could not stop server", "error", err)
 	}
+}
+
+func day() int64 {
+	loc, _ := time.LoadLocation("America/New_York")
+	now := time.Now().In(loc)
+
+	adjusted := now.Add(-11 * time.Hour)
+
+	dayNumber := adjusted.Unix() / (60 * 60 * 24)
+	return dayNumber
+}
+
+func secret(day int64) string {
+	input := []byte("secret" + fmt.Sprint(day))
+	hash := sha256.Sum256(input)
+	return hex.EncodeToString(hash[:3])
 }

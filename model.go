@@ -1,10 +1,7 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,68 +9,33 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type Screen string
+type Model struct {
+	state *state
 
-const (
-	TitleScreen       Screen = "back to title"
-	PlayScreen        Screen = "play today!"
-	NameScreen        Screen = "change name"
-	LeaderboardScreen Screen = "see leaderboard"
-)
-
-type model struct {
-	PlayerId string
-	State    Screen
-	Day      int64
-	Title    Title
-	Game     Game
-	Name     Name
-	Styles   Styles
-	Height   int
-	Width    int
+	// screens
+	Title Title
+	Play  Play
+	Board Board
 }
 
-func (m model) New() model {
-	m.State = TitleScreen
-	m.Day = day()
-	m.Title = Title{}.New()
-	m.Game = Game{
-		Secret:   secret(m.Day),
-		Day:      m.Day,
-		PlayerId: m.PlayerId,
-		Styles:   m.Styles,
-	}
-	m.Name = Name{}
+func (m Model) New() Model {
+	m.Title = Title{state: m.state}.New()
+	m.Play = Play{state: m.state}
+	m.Board = Board{state: m.state}
 	return m
 }
 
-func day() int64 {
-	loc, _ := time.LoadLocation("America/New_York")
-	now := time.Now().In(loc)
-
-	adjusted := now.Add(-11 * time.Hour)
-
-	dayNumber := adjusted.Unix() / (60 * 60 * 24)
-	return dayNumber
+func (m Model) Init() tea.Cmd {
+	return tea.Batch(m.Title.Init(), textinput.Blink)
 }
 
-func secret(day int64) string {
-	input := []byte("secret" + fmt.Sprint(day))
-	hash := sha256.Sum256(input)
-	return hex.EncodeToString(hash[:3])
-}
-
-func (m model) Init() tea.Cmd {
-	return textinput.Blink
-}
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.Height = msg.Height
-		m.Width = msg.Width
+		m.state.height = msg.Height
+		m.state.width = msg.Width
 		return m, nil
 
 	case tea.KeyMsg:
@@ -83,7 +45,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	switch m.State {
+	switch m.state.screen {
 	case TitleScreen:
 		title, cmd := m.Title.Update(msg)
 		if t, ok := title.(Title); ok {
@@ -92,65 +54,65 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 
 		if m.Title.Form.State == huh.StateCompleted {
-			m.State = m.Title.Form.Get("screen").(Screen)
-			if m.State == PlayScreen {
-				m.Game = m.Game.New()
-			}
-			if m.State == NameScreen {
-				m.Name = m.Name.New()
-			}
-		}
 
-	case NameScreen:
-		name, cmd := m.Name.Update(msg)
-		if t, ok := name.(Name); ok {
-			m.Name = t
-		}
-		cmds = append(cmds, cmd)
+			m.state.screen = m.Title.Form.Get("screen").(Screen)
 
-		if m.Name.Form.State == huh.StateCompleted {
-			m.Name.Value = m.Name.Form.Get("name").(string)
-			m.State = TitleScreen
-			m.Title = Title{}.New()
+			if m.state.screen == PlayScreen {
+				m.Play = m.Play.New()
+			}
+
+			if m.state.screen == BoardScreen {
+				m.Board = m.Board.New()
+			}
 		}
 
 	case PlayScreen:
-		game, cmd := m.Game.Update(msg)
-		if g, ok := game.(Game); ok {
-			m.Game = g
+		game, cmd := m.Play.Update(msg)
+		if g, ok := game.(Play); ok {
+			m.Play = g
 		}
 		cmds = append(cmds, cmd)
 
-	case LeaderboardScreen:
+	case BoardScreen:
+		board, cmd := m.Board.Update(msg)
+		if b, ok := board.(Board); ok {
+			m.Board = b
+		}
+		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	switch m.State {
+func (m Model) View() string {
+	switch m.state.screen {
 	case TitleScreen:
-		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Top,
+		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
 			lipgloss.JoinVertical(0.5,
-				m.Styles.CharGrade.MarginTop(2).Render(),
-				m.Styles.Title.Render("dailyhex!"),
-				m.Styles.Subtitle.Render("day "+fmt.Sprint(m.Day)),
+				m.state.styles.CharGrade.MarginTop(2).Render(),
+				m.state.styles.Title.Foreground(lipgloss.Color("#"+m.state.secret)).Render("dailyhex!"),
+				m.state.styles.Subtitle.Render("day "+fmt.Sprint(m.state.day)),
 				lipgloss.NewStyle().Margin(1, 0).Render(m.Title.View()),
 			),
 		)
 	case PlayScreen:
-		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Top,
+		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
 			lipgloss.JoinVertical(0.5,
-				m.Styles.CharGrade.MarginTop(2).Render(),
-				m.Styles.Title.Render("dailyhex!"),
-				m.Styles.Subtitle.Render("day "+fmt.Sprint(m.Day)),
-				m.Game.View(),
+				m.state.styles.CharGrade.MarginTop(2).Render(),
+				m.state.styles.Title.Foreground(lipgloss.Color("#"+m.state.secret)).Render("dailyhex!"),
+				m.state.styles.Subtitle.Render("day "+fmt.Sprint(m.state.day)),
+				m.Play.View(),
 			),
 		)
-	case NameScreen:
-		return m.Name.View()
-	case LeaderboardScreen:
-		return "leaderboard"
+	case BoardScreen:
+		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
+			lipgloss.JoinVertical(0.5,
+				m.state.styles.CharGrade.MarginTop(2).Render(),
+				m.state.styles.Title.Foreground(lipgloss.Color("#"+m.state.secret)).Render("dailyhex!"),
+				m.state.styles.Subtitle.Render("day "+fmt.Sprint(m.state.day)),
+				m.Board.View(),
+			),
+		)
 	}
-	return ""
+	return "uh oh"
 }

@@ -17,55 +17,56 @@ type Styles struct {
 	TriesBox        lipgloss.Style
 	TryBox          lipgloss.Style
 	CharGrade       lipgloss.Style
+	FormTheme       *huh.Theme
 }
 
-func (s Styles) New(ren *lipgloss.Renderer) Styles {
+func (s Styles) New(r *lipgloss.Renderer, secret string) Styles {
 	return Styles{
-		Title:           ren.NewStyle().Foreground(lipgloss.Color("15")).Bold(true),
-		Subtitle:        ren.NewStyle().Foreground(lipgloss.Color("08")),
-		GameBox:         ren.NewStyle().Padding(1, 0, 1, 1),
-		ColorBox:        ren.NewStyle().Width(2).Height(1).Margin(0, 1),
-		InputBox:        ren.NewStyle().Border(lipgloss.RoundedBorder()),
-		StateMessageBox: ren.NewStyle().MarginLeft(1).Italic(false),
-		TriesBox:        ren.NewStyle().Padding(0, 2, 0, 1),
-		TryBox:          ren.NewStyle().MarginTop(1),
-		CharGrade:       ren.NewStyle(),
+		Title:           r.NewStyle().Foreground(lipgloss.Color("15")).Bold(true),
+		Subtitle:        r.NewStyle().Foreground(lipgloss.Color("08")),
+		GameBox:         r.NewStyle().Padding(1, 0, 1, 1),
+		ColorBox:        r.NewStyle().Width(2).Height(1).Margin(0, 1),
+		InputBox:        r.NewStyle().Border(lipgloss.RoundedBorder()),
+		StateMessageBox: r.NewStyle().MarginLeft(1).Italic(false),
+		TriesBox:        r.NewStyle().Padding(0, 2, 0, 1),
+		TryBox:          r.NewStyle().MarginTop(1),
+		CharGrade:       r.NewStyle(),
+		FormTheme:       makeFormTheme(r, secret),
 	}
 }
 
-func Theme() *huh.Theme {
-	t := huh.ThemeBase()
+// 0 8 7 secret
+// bold
 
-	t.FieldSeparator = lipgloss.NewStyle().SetString("\n\n\n")
-	t.Group.Width(16)
+func makeFormTheme(r *lipgloss.Renderer, secret string) *huh.Theme {
+	var t huh.Theme
 
-	// button := lipgloss.NewStyle().
-	// 	Padding(buttonPaddingVertical, buttonPaddingHorizontal).
-	// 	MarginRight(1)
+	t.FieldSeparator = r.NewStyle().SetString("\n\n\n")
 
-	// // Focused styles.
-	// t.Focused.Base = lipgloss.NewStyle().PaddingLeft(1).BorderStyle(lipgloss.ThickBorder()).BorderLeft(true)
-	// t.Focused.Card = lipgloss.NewStyle().PaddingLeft(1)
-	// t.Focused.ErrorIndicator = lipgloss.NewStyle().SetString(" *")
-	// t.Focused.ErrorMessage = lipgloss.NewStyle().SetString(" *")
-	t.Focused.SelectSelector = lipgloss.NewStyle()
-	// t.Focused.NextIndicator = lipgloss.NewStyle().MarginLeft(1).SetString("→")
-	// t.Focused.PrevIndicator = lipgloss.NewStyle().MarginRight(1).SetString("←")
-	t.Focused.MultiSelectSelector = lipgloss.NewStyle()
-	// t.Focused.SelectedPrefix = lipgloss.NewStyle().SetString("[•] ")
-	// t.Focused.UnselectedPrefix = lipgloss.NewStyle().SetString("[ ] ")
-	// t.Focused.FocusedButton = button.Foreground(lipgloss.Color("0")).Background(lipgloss.Color("7"))
-	// t.Focused.BlurredButton = button.Foreground(lipgloss.Color("7")).Background(lipgloss.Color("0"))
-	// t.Focused.TextInput.Placeholder = lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
+	// group
+	t.Blurred.Base = r.NewStyle().BorderForeground(lipgloss.Color("0")).BorderStyle(lipgloss.HiddenBorder()).BorderLeft(true)
 
-	// t.Help = help.New().Styles
+	// prompts
+	t.Blurred.SelectSelector = r.NewStyle().Foreground(lipgloss.Color("8")).Bold(true).SetString("> ")
+	t.Blurred.TextInput.Prompt = r.NewStyle().Foreground(lipgloss.Color("8")).Bold(true)
 
-	// // Blurred styles.
-	// t.Blurred = t.Focused
-	// t.Blurred.Base = t.Blurred.Base.BorderStyle(lipgloss.HiddenBorder())
-	// t.Blurred.MultiSelectSelector = lipgloss.NewStyle().SetString("  ")
-	// t.Blurred.NextIndicator = lipgloss.NewStyle()
-	// t.Blurred.PrevIndicator = lipgloss.NewStyle()
+	// text
+	t.Blurred.UnselectedOption = r.NewStyle().Foreground(lipgloss.Color("8"))
+	t.Blurred.SelectedOption = r.NewStyle().Foreground(lipgloss.Color("8"))
+	t.Blurred.TextInput.Text = r.NewStyle().Foreground(lipgloss.Color("8"))
+	t.Blurred.TextInput.Placeholder = t.Blurred.TextInput.Text.Foreground(lipgloss.Color("0"))
 
-	return t
+	// ~ FOCUSED ~
+	t.Focused = t.Blurred
+
+	// prompts
+	t.Focused.SelectSelector = t.Focused.SelectSelector.Foreground(lipgloss.Color("7"))
+	t.Focused.TextInput.Prompt = t.Focused.TextInput.Prompt.Foreground(lipgloss.Color("7"))
+
+	// text
+	t.Focused.UnselectedOption = r.NewStyle().Foreground(lipgloss.Color("7"))
+	t.Focused.SelectedOption = r.NewStyle().Foreground(lipgloss.Color("#" + secret))
+	t.Focused.TextInput.Text = r.NewStyle().Foreground(lipgloss.Color("#" + secret))
+
+	return &t
 }
