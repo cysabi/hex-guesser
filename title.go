@@ -20,7 +20,7 @@ func (m Title) New() Title {
 						NameScreen,
 						LeaderboardScreen)...),
 			),
-		),
+		).WithTheme(huh.ThemeCatppuccin()),
 	}
 }
 

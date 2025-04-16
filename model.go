@@ -1,12 +1,15 @@
 package main
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
-	"math/rand"
+	"fmt"
 	"time"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Screen string
@@ -26,7 +29,8 @@ type model struct {
 	Game     Game
 	Name     Name
 	Styles   Styles
-	wsize    tea.WindowSizeMsg
+	Height   int
+	Width    int
 }
 
 func (m model) New() model {
@@ -54,14 +58,13 @@ func day() int64 {
 }
 
 func secret(day int64) string {
-	random := rand.New(rand.NewSource(day))
-	secret := make([]byte, 3)
-	random.Read(secret)
-	return hex.EncodeToString(secret)
+	input := []byte("secret" + fmt.Sprint(day))
+	hash := sha256.Sum256(input)
+	return hex.EncodeToString(hash[:3])
 }
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return textinput.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -69,7 +72,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.wsize = msg
+		m.Height = msg.Height
+		m.Width = msg.Width
 		return m, nil
 
 	case tea.KeyMsg:
@@ -126,9 +130,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	switch m.State {
 	case TitleScreen:
-		return m.Title.View()
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Top,
+			lipgloss.JoinVertical(0.5,
+				m.Styles.CharGrade.MarginTop(2).Render(),
+				m.Styles.Title.Render("dailyhex!"),
+				m.Styles.Subtitle.Render("day "+fmt.Sprint(m.Day)),
+				m.Title.View(),
+			),
+		)
 	case PlayScreen:
-		return m.Game.View()
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Top,
+			lipgloss.JoinVertical(0.5,
+				m.Styles.CharGrade.MarginTop(2).Render(),
+				m.Styles.Title.Render("dailyhex!"),
+				m.Styles.Subtitle.Render("day "+fmt.Sprint(m.Day)),
+				m.Game.View(),
+			),
+		)
 	case NameScreen:
 		return m.Name.View()
 	case LeaderboardScreen:

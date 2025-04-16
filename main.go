@@ -14,9 +14,10 @@ import (
 	"github.com/charmbracelet/log"
 	"github.com/charmbracelet/ssh"
 	"github.com/charmbracelet/wish"
+	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
 	"github.com/charmbracelet/wish/logging"
-	"github.com/muesli/termenv"
+	"github.com/tidwall/buntdb"
 )
 
 const (
@@ -49,41 +50,33 @@ func (m *Memory) AppendTry(day int64, playerid string, try Try) {
 
 var memory = &Memory{names: map[string]string{}, board: map[int64]map[string][]Try{}}
 
-func myCustomBubbleteaMiddleware() wish.Middleware {
-	newProg := func(m tea.Model, opts ...tea.ProgramOption) *tea.Program {
-		p := tea.NewProgram(m, opts...)
-		// go func() {
-		// 	for {
-		// 		<-time.After(1 * time.Second)
-		// 		p.Send(time.Now())
-		// 	}
-		// }()
-		return p
-	}
-	teaHandler := func(s ssh.Session) *tea.Program {
-		_, _, active := s.Pty()
-		if !active {
-			wish.Fatalln(s, "no active terminal, skipping")
-			return nil
-		}
-		renderer := bubbletea.MakeRenderer(s)
-
-		m := model{
-			PlayerId: strings.Split(s.RemoteAddr().String(), ":")[0],
-			Styles:   Styles{}.New(renderer),
-		}.New()
-
-		return newProg(m, append(bubbletea.MakeOptions(s), tea.WithAltScreen())...)
-	}
-	return bubbletea.MiddlewareWithProgramHandler(teaHandler, termenv.ANSI256)
-}
-
 func main() {
+	db, err := buntdb.Open("data.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
 		wish.WithMiddleware(
-			myCustomBubbleteaMiddleware(),
+			bubbletea.Middleware(func(s ssh.Session) (tea.Model, []tea.ProgramOption) {
+				pty, _, _ := s.Pty()
+
+				renderer := bubbletea.MakeRenderer(s)
+
+				playerId := strings.Split(s.RemoteAddr().String(), ":")[0]
+
+				m := model{
+					PlayerId: playerId,
+					Styles:   Styles{}.New(renderer),
+					Height:   pty.Window.Height,
+					Width:    pty.Window.Width,
+				}.New()
+				return m, []tea.ProgramOption{tea.WithAltScreen()}
+			}),
+			activeterm.Middleware(),
 			logging.Middleware(),
 		),
 	)
