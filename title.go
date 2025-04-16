@@ -6,13 +6,16 @@ import (
 )
 
 type Title struct {
-	Form *huh.Form
+	Value string
+	Form  *huh.Form
 }
 
 func (m Title) New() Title {
+	input := huh.NewInput().Key("name").Title("enter name").Placeholder(m.Value)
 	return Title{
 		Form: huh.NewForm(
 			huh.NewGroup(
+				input,
 				huh.NewSelect[Screen]().
 					Key("screen").
 					Options(huh.NewOptions(
@@ -20,7 +23,7 @@ func (m Title) New() Title {
 						NameScreen,
 						LeaderboardScreen)...),
 			),
-		).WithTheme(huh.ThemeCatppuccin()),
+		).WithWidth(20).WithTheme(huh.ThemeBase16()).WithShowHelp(false),
 	}
 }
 

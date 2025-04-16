@@ -37,7 +37,7 @@ func Theme() *huh.Theme {
 	t := huh.ThemeBase()
 
 	t.FieldSeparator = lipgloss.NewStyle().SetString("\n\n\n")
-	t.Form.Width(16)
+	t.Group.Width(16)
 
 	// button := lipgloss.NewStyle().
 	// 	Padding(buttonPaddingVertical, buttonPaddingHorizontal).
@@ -48,10 +48,10 @@ func Theme() *huh.Theme {
 	// t.Focused.Card = lipgloss.NewStyle().PaddingLeft(1)
 	// t.Focused.ErrorIndicator = lipgloss.NewStyle().SetString(" *")
 	// t.Focused.ErrorMessage = lipgloss.NewStyle().SetString(" *")
-	t.Focused.SelectSelector = lipgloss.NewStyle().SetString("")
+	t.Focused.SelectSelector = lipgloss.NewStyle()
 	// t.Focused.NextIndicator = lipgloss.NewStyle().MarginLeft(1).SetString("→")
 	// t.Focused.PrevIndicator = lipgloss.NewStyle().MarginRight(1).SetString("←")
-	t.Focused.MultiSelectSelector = lipgloss.NewStyle().SetString("")
+	t.Focused.MultiSelectSelector = lipgloss.NewStyle()
 	// t.Focused.SelectedPrefix = lipgloss.NewStyle().SetString("[•] ")
 	// t.Focused.UnselectedPrefix = lipgloss.NewStyle().SetString("[ ] ")
 	// t.Focused.FocusedButton = button.Foreground(lipgloss.Color("0")).Background(lipgloss.Color("7"))

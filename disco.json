@@ -4,7 +4,7 @@
     "receiver": {
       "publishedPorts": [
         {
-          "publishedAs": 22,
+          "publishedAs": 2222,
           "fromContainerPort": 22,
           "protocol": "tcp"
         }

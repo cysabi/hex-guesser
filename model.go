@@ -135,7 +135,7 @@ func (m model) View() string {
 				m.Styles.CharGrade.MarginTop(2).Render(),
 				m.Styles.Title.Render("dailyhex!"),
 				m.Styles.Subtitle.Render("day "+fmt.Sprint(m.Day)),
-				m.Title.View(),
+				lipgloss.NewStyle().Margin(1, 0).Render(m.Title.View()),
 			),
 		)
 	case PlayScreen:
