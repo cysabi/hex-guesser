@@ -15,10 +15,10 @@ type Title struct {
 }
 
 func (m Title) New() Title {
-	placeholder := "your name"
-	if len(m.state.playerid) > 0 {
-		placeholder = m.state.playerid
-	}
+	placeholder := "what's ur name?"
+	// if len(m.state.playerid) > 0 {
+	// 	placeholder = m.state.playerid
+	// }
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().Key("name").Placeholder(placeholder).Prompt("? ").Validate(
@@ -36,8 +36,8 @@ func (m Title) New() Title {
 					BoardScreen)...),
 		),
 	).WithWidth(19).WithShowHelp(false).WithTheme(m.state.styles.FormTheme)
-
-	return Title{Form: form}
+	m.Form = form
+	return m
 }
 
 func (m Title) Init() tea.Cmd {
@@ -54,5 +54,5 @@ func (m Title) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Title) View() string {
-	return m.Form.View()
+	return m.state.styles.GameBox.Render(m.Form.View())
 }

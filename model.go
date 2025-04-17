@@ -85,34 +85,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+
+	subtitle := m.state.styles.Subtitle.Render("day " + fmt.Sprint(m.state.day))
+	if m.state.gameState != Idle {
+		subtitle = m.state.styles.Subtitle.Foreground(lipgloss.Color(m.state.gameState)).Render(m.Play.StateMsg())
+	}
+
+	banner := m.state.styles.CharGrade.Margin(2).AlignHorizontal(lipgloss.Center).Render(
+		lipgloss.JoinVertical(0.5,
+			m.state.styles.Title.Foreground(lipgloss.Color("#"+m.state.secret)).AlignHorizontal(lipgloss.Center).Render("dailyhex!"),
+			subtitle,
+		),
+	)
 	switch m.state.screen {
 	case TitleScreen:
 		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
-			lipgloss.JoinVertical(0.5,
-				m.state.styles.CharGrade.MarginTop(2).Render(),
-				m.state.styles.Title.Foreground(lipgloss.Color("#"+m.state.secret)).Render("dailyhex!"),
-				m.state.styles.Subtitle.Render("day "+fmt.Sprint(m.state.day)),
-				lipgloss.NewStyle().Margin(1, 0).Render(m.Title.View()),
-			),
-		)
+			lipgloss.JoinVertical(0.5, banner, m.Title.View()))
 	case PlayScreen:
 		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
-			lipgloss.JoinVertical(0.5,
-				m.state.styles.CharGrade.MarginTop(2).Render(),
-				m.state.styles.Title.Foreground(lipgloss.Color("#"+m.state.secret)).Render("dailyhex!"),
-				m.state.styles.Subtitle.Render("day "+fmt.Sprint(m.state.day)),
-				m.Play.View(),
-			),
-		)
+			lipgloss.JoinVertical(0.5, banner, m.Play.View()))
 	case BoardScreen:
 		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
-			lipgloss.JoinVertical(0.5,
-				m.state.styles.CharGrade.MarginTop(2).Render(),
-				m.state.styles.Title.Foreground(lipgloss.Color("#"+m.state.secret)).Render("dailyhex!"),
-				m.state.styles.Subtitle.Render("day "+fmt.Sprint(m.state.day)),
-				m.Board.View(),
-			),
-		)
+			lipgloss.JoinVertical(0.5, banner, m.Board.View()))
 	}
 	return "uh oh"
 }

@@ -8,30 +8,26 @@ import (
 // styles
 
 type Styles struct {
-	Title           lipgloss.Style
-	Subtitle        lipgloss.Style
-	GameBox         lipgloss.Style
-	ColorBox        lipgloss.Style
-	InputBox        lipgloss.Style
-	StateMessageBox lipgloss.Style
-	TriesBox        lipgloss.Style
-	TryBox          lipgloss.Style
-	CharGrade       lipgloss.Style
-	FormTheme       *huh.Theme
+	Title     lipgloss.Style
+	Subtitle  lipgloss.Style
+	GameBox   lipgloss.Style
+	ColorBox  lipgloss.Style
+	InputBox  lipgloss.Style
+	TryBox    lipgloss.Style
+	CharGrade lipgloss.Style
+	FormTheme *huh.Theme
 }
 
 func (s Styles) New(r *lipgloss.Renderer, secret string) Styles {
 	return Styles{
-		Title:           r.NewStyle().Foreground(lipgloss.Color("15")).Bold(true),
-		Subtitle:        r.NewStyle().Foreground(lipgloss.Color("08")),
-		GameBox:         r.NewStyle().Padding(1, 0, 1, 1),
-		ColorBox:        r.NewStyle().Width(2).Height(1).Margin(0, 1),
-		InputBox:        r.NewStyle().Border(lipgloss.RoundedBorder()),
-		StateMessageBox: r.NewStyle().MarginLeft(1).Italic(false),
-		TriesBox:        r.NewStyle().Padding(0, 2, 0, 1),
-		TryBox:          r.NewStyle().MarginTop(1),
-		CharGrade:       r.NewStyle(),
-		FormTheme:       makeFormTheme(r, secret),
+		Title:     r.NewStyle().Width(19).Bold(true),
+		Subtitle:  r.NewStyle().Foreground(lipgloss.Color("8")),
+		GameBox:   r.NewStyle().PaddingRight(1),
+		ColorBox:  r.NewStyle().Width(2).Height(1).Margin(0, 1),
+		InputBox:  r.NewStyle().Border(lipgloss.RoundedBorder()),
+		TryBox:    r.NewStyle().MarginTop(1),
+		CharGrade: r.NewStyle(),
+		FormTheme: makeFormTheme(r, secret),
 	}
 }
 

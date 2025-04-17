@@ -87,27 +87,22 @@ func (m Play) View() string {
 		display[i] = t.View(m.state.styles)
 	}
 
-	return m.state.styles.GameBox.Render(lipgloss.JoinVertical(0,
-		lipgloss.JoinHorizontal(lipgloss.Center,
-			m.state.styles.InputBox.BorderForeground(lipgloss.Color(m.state.gameState)).Render(
-				lipgloss.JoinHorizontal(0,
-					m.state.styles.ColorBox.Background(lipgloss.Color("#"+m.state.secret)).Render(),
-					m.Input.View(),
-				),
-			),
-			m.state.styles.StateMessageBox.Foreground(lipgloss.Color(m.state.gameState)).Render(m.StateMsg()),
-		),
-		m.state.styles.TriesBox.Render(
-			lipgloss.JoinVertical(0,
-				display...,
+	return m.state.styles.GameBox.Render(lipgloss.JoinVertical(0.5,
+		m.state.styles.InputBox.BorderForeground(lipgloss.Color(m.state.gameState)).Render(
+			lipgloss.JoinHorizontal(0,
+				m.state.styles.ColorBox.Background(lipgloss.Color("#"+m.state.secret)).Render(),
+				m.Input.View(),
 			),
 		),
+		m.state.styles.GameBox.Render(lipgloss.JoinVertical(0,
+			display...,
+		)),
 	))
 }
 
 func (m Play) StateMsg() string {
 	if m.state.gameState == Invalid {
-		return "invalid hex!"
+		return "invalid hex"
 	} else if m.state.gameState == Win {
 		return fmt.Sprintf("you got it! (%d turns)", len(memory.GetDay(m.state.day)[m.state.playerid])+1)
 	}
