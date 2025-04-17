@@ -6,14 +6,15 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
 type Play struct {
-	state *state
-
-	Input textinput.Model
+	state    *state
+	Input    textinput.Model
+	Viewport viewport.Model
 }
 
 func (m Play) New() Play {
@@ -24,6 +25,8 @@ func (m Play) New() Play {
 	ti.Focus()
 
 	m.Input = ti
+	m.Viewport = viewport.New(12, m.state.height-10)
+	m.Viewport.SetContent(lipgloss.JoinVertical(0, m.displayMoves()...))
 	m.state.gameState = Idle
 	return m
 }
@@ -33,6 +36,10 @@ func (m Play) Init() tea.Cmd {
 }
 
 func (m Play) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var (
+		cmd  tea.Cmd
+		cmds []tea.Cmd
+	)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -48,6 +55,7 @@ func (m Play) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.state.gameState = Win
 			} else {
 				m.state.AppendMove(move)
+				m.Viewport.SetContent(lipgloss.JoinVertical(0, m.displayMoves()...))
 				m.state.gameState = Idle
 			}
 
@@ -65,18 +73,15 @@ func (m Play) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	var cmd tea.Cmd
+	m.Viewport, cmd = m.Viewport.Update(msg)
+	cmds = append(cmds, cmd)
+
 	m.Input, cmd = m.Input.Update(msg)
+	cmds = append(cmds, cmd)
 
-	var hex []rune
-	for _, r := range m.Input.Value() {
-		if (r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F') {
-			hex = append(hex, r)
-		}
-	}
+	m.Input.SetValue(strings.ToLower(toHex(m.Input.Value())))
 
-	m.Input.SetValue(strings.ToLower(string(hex)))
-	return m, cmd
+	return m, tea.Batch(cmds...)
 }
 
 func (m Play) View() string {
@@ -87,9 +92,7 @@ func (m Play) View() string {
 				m.Input.View(),
 			),
 		),
-		m.state.styles.GameBox.Render(lipgloss.JoinVertical(0,
-			m.displayMoves()...,
-		)),
+		m.state.styles.GameBox.Render(m.Viewport.View()),
 	))
 }
 
@@ -163,4 +166,14 @@ func (m Play) displayMove(move string, grade []CharGrade) string {
 			m.state.styles.ColorBox.Background(lipgloss.Color("#"+move)).Render(),
 			text.String(),
 		))
+}
+
+func toHex(str string) string {
+	var hex []rune
+	for _, r := range str {
+		if (r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F') {
+			hex = append(hex, r)
+		}
+	}
+	return string(hex)
 }

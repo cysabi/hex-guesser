@@ -3,17 +3,18 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Title struct {
 	state *state
-
-	Form *huh.Form
+	Form  *huh.Form
 }
 
 func (m Title) New() Title {
@@ -23,7 +24,7 @@ func (m Title) New() Title {
 	boardOption := huh.NewOption(string(BoardScreen), BoardScreen)
 
 	if m.state.GetDone() {
-		playOption = huh.NewOption(string(PlayScreen), Screen(m.state.styles.Disabled.Render(string(PlayScreen))))
+		playOption.Key = m.state.styles.Disabled.Render(string(PlayScreen))
 	}
 
 	form := huh.NewForm(
@@ -31,18 +32,16 @@ func (m Title) New() Title {
 			huh.NewInput().Key("name").Value(&username).CharLimit(20).Placeholder("what's ur name?").Prompt("? ").Validate(
 				func(str string) error {
 					if len(str) == 0 {
-						return errors.New("what's ur name?")
+						return errors.New("what's ur name!?")
 					}
 					return nil
 				},
 			),
 			huh.NewSelect[Screen]().
 				Key("screen").
-				Options(playOption, boardOption).Validate(func(s Screen) error {
-				return errors.New("next code in " + dist())
-			}),
+				Options(playOption, boardOption),
 		),
-	).WithWidth(19).WithShowHelp(false).WithTheme(m.state.styles.FormTheme)
+	).WithWidth(19).WithShowHelp(false).WithShowErrors(false).WithTheme(m.state.styles.FormTheme)
 
 	if len(username) > 0 {
 		form.NextField()
@@ -63,14 +62,22 @@ func (m Title) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	form, cmd := m.Form.Update(msg)
 	if f, ok := form.(*huh.Form); ok {
 		m.Form = f
-		m.state.SetName(m.Form.Get("name").(string))
 	}
 
 	return m, cmd
 }
 
 func (m Title) View() string {
-	return m.Form.View()
+	errs := m.Form.Errors()
+	if len(errs) > 0 {
+		return lipgloss.JoinVertical(0,
+			m.Form.View(),
+			m.state.styles.Error.Render("* "+errs[0].Error()),
+		)
+	} else {
+		return m.Form.View()
+	}
+
 }
 
 func dist() string {
@@ -104,4 +111,12 @@ func dist() string {
 		}
 		return fmt.Sprintf("%d seconds", seconds)
 	}
+}
+
+func cropHeight(s string, height int) string {
+	lines := strings.Split(s, "\n")
+	if len(lines) > height {
+		return strings.Join(lines[:height], "\n")
+	}
+	return s
 }

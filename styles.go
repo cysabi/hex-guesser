@@ -16,6 +16,7 @@ type Styles struct {
 	MoveBox   lipgloss.Style
 	CharGrade lipgloss.Style
 	Disabled  lipgloss.Style
+	Error     lipgloss.Style
 	FormTheme *huh.Theme
 }
 
@@ -28,7 +29,8 @@ func (s Styles) New(r *lipgloss.Renderer, secret string) Styles {
 		InputBox:  r.NewStyle().Border(lipgloss.RoundedBorder()),
 		MoveBox:   r.NewStyle().PaddingTop(1).PaddingRight(1),
 		CharGrade: r.NewStyle(),
-		Disabled:  r.NewStyle().Strikethrough(true).Foreground(lipgloss.Color("8")),
+		Disabled:  r.NewStyle().Strikethrough(true).Foreground(lipgloss.Color("0")),
+		Error:     r.NewStyle().Width(19).PaddingLeft(1).Foreground(lipgloss.Color("1")),
 		FormTheme: makeFormTheme(r, secret),
 	}
 }

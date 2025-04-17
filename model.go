@@ -36,9 +36,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.state.height = msg.Height
 		m.state.width = msg.Width
-		return m, nil
+		m.Play.Viewport.Height = m.state.height - 10
 
 	case tea.KeyMsg:
+		m.state.showUpNext = false
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
@@ -55,14 +56,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.Title.Form.State == huh.StateCompleted {
 
+			m.state.SetName(m.Title.Form.Get("name").(string))
 			newScreen := m.Title.Form.Get("screen").(Screen)
 
 			if newScreen == PlayScreen {
 				if m.state.GetDone() {
+					m.Title = m.Title.New()
+					m.state.showUpNext = true
+				} else {
 					m.state.screen = newScreen
 					m.Play = m.Play.New()
-				} else {
-					m.Title.Form.State = huh.StateNormal
 				}
 			}
 			if newScreen == BoardScreen {
@@ -104,8 +107,14 @@ func (m Model) View() string {
 	)
 	switch m.state.screen {
 	case TitleScreen:
+		view := m.Title.View()
+		if m.state.showUpNext {
+			view = lipgloss.JoinVertical(0,
+				view,
+				m.state.styles.Error.Render("* next move in "+dist()))
+		}
 		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
-			lipgloss.JoinVertical(0.5, banner, m.Title.View()))
+			lipgloss.JoinVertical(0.5, banner, view))
 	case PlayScreen:
 		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
 			lipgloss.JoinVertical(0.5, banner, m.Play.View()))

@@ -30,15 +30,16 @@ const (
 )
 
 type state struct {
-	db        *buntdb.DB
-	day       int64
-	secret    string
-	playerid  string
-	height    int
-	width     int
-	gameState GameState
-	screen    Screen
-	styles    Styles
+	db         *buntdb.DB
+	day        int64
+	secret     string
+	playerid   string
+	height     int
+	width      int
+	showUpNext bool
+	gameState  GameState
+	screen     Screen
+	styles     Styles
 }
 
 type GameState string
@@ -72,15 +73,16 @@ func appMiddleware(db *buntdb.DB) wish.Middleware {
 		renderer := bubbletea.MakeRenderer(s)
 
 		state := state{
-			db:        db,
-			day:       day,
-			secret:    secret,
-			playerid:  playerId,
-			height:    pty.Window.Height,
-			width:     pty.Window.Width,
-			gameState: Idle,
-			screen:    TitleScreen,
-			styles:    Styles{}.New(renderer, secret),
+			db:         db,
+			day:        day,
+			secret:     secret,
+			playerid:   playerId,
+			height:     pty.Window.Height,
+			width:      pty.Window.Width,
+			showUpNext: false,
+			gameState:  Idle,
+			screen:     TitleScreen,
+			styles:     Styles{}.New(renderer, secret),
 		}
 		if state.GetDone() {
 			state.gameState = Win
