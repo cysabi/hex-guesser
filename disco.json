@@ -1,8 +1,14 @@
 {
   "version": "1.0",
   "services": {
-    "receiver": {
-      "port": 22,
+    "app": {
+      "publishedPorts": [
+        {
+          "publishedAs": 2222,
+          "fromContainerPort": 22,
+          "protocol": "tcp"
+        }
+      ],
       "volumes": [
         {
           "name": "db",
