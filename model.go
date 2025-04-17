@@ -107,9 +107,9 @@ func (m Model) View() string {
 		subtitle = m.state.styles.Subtitle.Foreground(lipgloss.Color(m.state.gameState)).Render(m.Play.StateMsg())
 	}
 
-	banner := m.state.styles.CharGrade.Margin(2).AlignHorizontal(lipgloss.Center).Render(
-		lipgloss.JoinVertical(0.5,
-			m.state.styles.Title.Foreground(lipgloss.Color("#"+m.state.secret)).AlignHorizontal(lipgloss.Center).Render("dailyhex!"),
+	banner := m.state.styles.CharGrade.Margin(2).Render(
+		lipgloss.JoinVertical(lipgloss.Center,
+			m.state.styles.Title.Foreground(lipgloss.Color("#"+m.state.secret)).Render("dailyhex!"),
 			subtitle,
 		),
 	)
@@ -122,13 +122,13 @@ func (m Model) View() string {
 				m.state.styles.Error.Render("* opens in "+dist()))
 		}
 		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
-			lipgloss.JoinVertical(0.5, banner, view))
+			lipgloss.JoinVertical(lipgloss.Center, banner, view))
 	case PlayScreen:
 		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
-			lipgloss.JoinVertical(0.5, banner, m.Play.View()))
+			lipgloss.JoinVertical(lipgloss.Center, banner, m.Play.View()))
 	case BoardScreen:
 		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
-			lipgloss.JoinVertical(0.5, banner, m.Board.View()))
+			lipgloss.JoinVertical(lipgloss.Center, banner, m.Board.View()))
 	}
 	return "uh oh"
 }

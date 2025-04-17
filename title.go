@@ -43,7 +43,7 @@ func (m Title) New() Title {
 				Key("screen").
 				Options(playOption, boardOption),
 		),
-	).WithWidth(19).WithShowHelp(false).WithShowErrors(false).WithTheme(m.state.styles.FormTheme)
+	).WithWidth(21).WithShowHelp(false).WithShowErrors(false).WithTheme(m.state.styles.FormTheme)
 
 	if len(username) > 0 {
 		form.NextField()

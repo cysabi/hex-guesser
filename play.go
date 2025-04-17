@@ -85,15 +85,17 @@ func (m Play) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Play) View() string {
-	return m.state.styles.GameBox.Render(lipgloss.JoinVertical(0.5,
-		m.state.styles.InputBox.BorderForeground(lipgloss.Color(m.state.gameState)).Render(
-			lipgloss.JoinHorizontal(0,
-				m.state.styles.ColorBox.Background(lipgloss.Color("#"+m.state.secret)).Render(),
-				m.Input.View(),
-			),
+	input := m.state.styles.InputBox.BorderForeground(lipgloss.Color(m.state.gameState)).Render(
+		lipgloss.JoinHorizontal(0,
+			m.state.styles.ColorBox.Background(lipgloss.Color("#"+m.state.secret)).Render(),
+			m.Input.View(),
 		),
-		m.state.styles.GameBox.Render(m.Viewport.View()),
-	))
+	)
+
+	return lipgloss.JoinVertical(lipgloss.Center,
+		input,
+		m.Viewport.View(),
+	)
 }
 
 func (m Play) StateMsg() string {

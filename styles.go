@@ -25,18 +25,18 @@ type Styles struct {
 
 func (s Styles) New(r *lipgloss.Renderer, secret string) Styles {
 	return Styles{
-		Title:       r.NewStyle().Width(19).Bold(true),
+		Title:       r.NewStyle().Bold(true),
 		Subtitle:    r.NewStyle().Foreground(lipgloss.Color("8")),
 		NormalText:  r.NewStyle().Foreground(lipgloss.Color("7")),
 		TableRight:  r.NewStyle().Width(53).AlignHorizontal(lipgloss.Right),
 		BoardArrows: r.NewStyle().Foreground(lipgloss.Color("7")).Bold(true),
-		GameBox:     r.NewStyle(),
+		GameBox:     r.NewStyle().Width(21),
 		ColorBox:    r.NewStyle().Width(2).Height(1).Margin(0, 1),
 		InputBox:    r.NewStyle().Border(lipgloss.RoundedBorder()),
-		MoveBox:     r.NewStyle().PaddingTop(1).PaddingRight(1),
+		MoveBox:     r.NewStyle().PaddingTop(1),
 		CharGrade:   r.NewStyle(),
 		Disabled:    r.NewStyle().Strikethrough(true).Foreground(lipgloss.Color("8")),
-		Error:       r.NewStyle().Width(20).PaddingLeft(1).Foreground(lipgloss.Color("1")),
+		Error:       r.NewStyle().Width(21).PaddingLeft(1).Foreground(lipgloss.Color("1")),
 		FormTheme:   makeFormTheme(r, secret),
 	}
 }
