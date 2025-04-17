@@ -2,11 +2,11 @@
   "version": "1.0",
   "services": {
     "receiver": {
-      "publishedPorts": [
+      "port": 22,
+      "volumes": [
         {
-          "publishedAs": 2222,
-          "fromContainerPort": 22,
-          "protocol": "tcp"
+          "name": "db",
+          "destinationPath": "/db"
         }
       ]
     }

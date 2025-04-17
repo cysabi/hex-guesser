@@ -70,6 +70,7 @@ func appMiddleware(db *buntdb.DB) wish.Middleware {
 		day := day()
 		secret := secret(day)
 		playerId := strings.Split(s.RemoteAddr().String(), ":")[0]
+		log.Info("new tea: playerId: " + playerId)
 
 		renderer := bubbletea.MakeRenderer(s)
 
@@ -97,7 +98,7 @@ func appMiddleware(db *buntdb.DB) wish.Middleware {
 }
 
 func main() {
-	db, err := buntdb.Open("data.db")
+	db, err := buntdb.Open("db/data.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -146,8 +147,7 @@ func day() int64 {
 }
 
 func secret(day int64) string {
-	// return "123456"
-	input := []byte("secret" + fmt.Sprint(day))
+	input := []byte("secret:" + fmt.Sprint(day))
 	hash := sha256.Sum256(input)
 	return hex.EncodeToString(hash[:3])
 }
