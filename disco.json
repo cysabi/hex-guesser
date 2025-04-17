@@ -12,7 +12,7 @@
       "volumes": [
         {
           "name": "store",
-          "destinationPath": "./store"
+          "destinationPath": "/usr/src/app/store"
         }
       ]
     }

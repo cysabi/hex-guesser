@@ -1,0 +1,9 @@
+version: "2"
+
+services:
+  app:
+    build: .
+    ports:
+      - "2222:22"
+    volumes:
+      - ./store:/usr/src/app/store
