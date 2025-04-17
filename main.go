@@ -147,7 +147,7 @@ func day() int64 {
 }
 
 func secret(day int64) string {
-	input := []byte("secret:" + fmt.Sprint(day))
+	input := []byte("secret::" + fmt.Sprint(day))
 	hash := sha256.Sum256(input)
 	return hex.EncodeToString(hash[:3])
 }
