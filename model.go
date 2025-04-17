@@ -55,15 +55,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if m.Title.Form.State == huh.StateCompleted {
 
-			m.state.screen = m.Title.Form.Get("screen").(Screen)
+			newScreen := m.Title.Form.Get("screen").(Screen)
 
-			m.state.SetName(m.Title.Form.Get("name").(string))
-
-			if m.state.screen == PlayScreen {
-				m.Play = m.Play.New()
+			if newScreen == PlayScreen {
+				if m.state.GetDone() {
+					m.state.screen = newScreen
+					m.Play = m.Play.New()
+				} else {
+					m.Title.Form.State = huh.StateNormal
+				}
 			}
-
-			if m.state.screen == BoardScreen {
+			if newScreen == BoardScreen {
+				m.state.screen = newScreen
 				m.Board = m.Board.New()
 			}
 		}

@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,6 +19,13 @@ type Title struct {
 func (m Title) New() Title {
 	username := m.state.GetName()
 
+	playOption := huh.NewOption(string(PlayScreen), PlayScreen)
+	boardOption := huh.NewOption(string(BoardScreen), BoardScreen)
+
+	if m.state.GetDone() {
+		playOption = huh.NewOption(string(PlayScreen), Screen(m.state.styles.Disabled.Render(string(PlayScreen))))
+	}
+
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().Key("name").Value(&username).CharLimit(20).Placeholder("what's ur name?").Prompt("? ").Validate(
@@ -29,14 +38,17 @@ func (m Title) New() Title {
 			),
 			huh.NewSelect[Screen]().
 				Key("screen").
-				Options(huh.NewOptions(
-					PlayScreen,
-					BoardScreen)...),
+				Options(playOption, boardOption).Validate(func(s Screen) error {
+				return errors.New("next code in " + dist())
+			}),
 		),
 	).WithWidth(19).WithShowHelp(false).WithTheme(m.state.styles.FormTheme)
 
 	if len(username) > 0 {
 		form.NextField()
+		if m.state.GetDone() {
+			boardOption.Selected(true)
+		}
 	}
 
 	m.Form = form
@@ -51,6 +63,7 @@ func (m Title) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	form, cmd := m.Form.Update(msg)
 	if f, ok := form.(*huh.Form); ok {
 		m.Form = f
+		m.state.SetName(m.Form.Get("name").(string))
 	}
 
 	return m, cmd
@@ -58,4 +71,37 @@ func (m Title) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Title) View() string {
 	return m.Form.View()
+}
+
+func dist() string {
+	loc, _ := time.LoadLocation("America/New_York")
+
+	now := time.Now().In(loc)
+	next11am := time.Date(now.Year(), now.Month(), now.Day(), 11, 0, 0, 0, loc)
+	if now.After(next11am) {
+		next11am = next11am.Add(24 * time.Hour)
+	}
+
+	diff := next11am.Sub(now)
+
+	hours := int(diff.Hours())
+	minutes := int(diff.Minutes()) % 60
+	seconds := int(diff.Seconds()) % 60
+
+	if hours > 0 {
+		if hours == 1 {
+			return "1 hour"
+		}
+		return fmt.Sprintf("%d hours", hours)
+	} else if minutes > 0 {
+		if minutes == 1 {
+			return "1 minute"
+		}
+		return fmt.Sprintf("%d minutes", minutes)
+	} else {
+		if seconds == 1 {
+			return "1 second"
+		}
+		return fmt.Sprintf("%d seconds", seconds)
+	}
 }
