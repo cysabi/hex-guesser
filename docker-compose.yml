@@ -3,7 +3,6 @@ version: "2"
 services:
   app:
     build: .
-    ports:
-      - "22:22"
     volumes:
       - ./store:/usr/src/app/store
+    network_mode: "host"
