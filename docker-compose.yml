@@ -4,6 +4,6 @@ services:
   app:
     build: .
     ports:
-      - "2222:22"
+      - "22:22"
     volumes:
       - ./store:/usr/src/app/store
