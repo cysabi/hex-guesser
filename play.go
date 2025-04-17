@@ -44,9 +44,10 @@ func (m Play) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if len(move) != 6 {
 				m.state.gameState = Invalid
 			} else if m.state.secret == move {
+				m.state.SetDone(true)
 				m.state.gameState = Win
 			} else {
-				memory.AppendTry(m.state.day, m.state.playerid, Try{move: move}.New(m.state.secret))
+				m.state.AppendMove(move)
 				m.state.gameState = Idle
 			}
 
@@ -79,14 +80,6 @@ func (m Play) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Play) View() string {
-	tries := slices.Clone(memory.GetDay(m.state.day)[m.state.playerid])
-	slices.Reverse(tries)
-
-	display := make([]string, len(memory.GetDay(m.state.day)[m.state.playerid]))
-	for i, t := range tries {
-		display[i] = t.View(m.state.styles)
-	}
-
 	return m.state.styles.GameBox.Render(lipgloss.JoinVertical(0.5,
 		m.state.styles.InputBox.BorderForeground(lipgloss.Color(m.state.gameState)).Render(
 			lipgloss.JoinHorizontal(0,
@@ -95,7 +88,7 @@ func (m Play) View() string {
 			),
 		),
 		m.state.styles.GameBox.Render(lipgloss.JoinVertical(0,
-			display...,
+			m.displayMoves()...,
 		)),
 	))
 }
@@ -104,30 +97,39 @@ func (m Play) StateMsg() string {
 	if m.state.gameState == Invalid {
 		return "invalid hex"
 	} else if m.state.gameState == Win {
-		return fmt.Sprintf("you got it! (%d turns)", len(memory.GetDay(m.state.day)[m.state.playerid])+1)
+		return fmt.Sprintf("you got it! (%d turns)", len(m.state.GetMoves())+1)
 	}
 	return ""
 }
 
-type Try struct {
-	move  string
-	grade []Grade
-}
-
-type Grade string
+type CharGrade string
 
 const (
-	Green  Grade = "2"
-	Yellow Grade = "3"
-	Gray   Grade = "8"
+	Green  CharGrade = "2"
+	Yellow CharGrade = "3"
+	Gray   CharGrade = "8"
 )
 
-func (m Try) New(inSecret string) Try {
-	grade := make([]Grade, len(inSecret))
-	secret := []rune(inSecret)
+func (m Play) displayMoves() []string {
+	moves := m.state.GetMoves()
+	slices.Reverse(moves)
+	out := make([]string, len(moves))
+
+	for i, move := range moves {
+		grade := m.gradeMove(move)
+		out[i] = m.displayMove(move, grade)
+	}
+
+	return out
+
+}
+
+func (m Play) gradeMove(move string) []CharGrade {
+	grade := make([]CharGrade, len(m.state.secret))
+	secret := []rune(m.state.secret)
 
 	for i, s := range secret {
-		if s == []rune(m.move)[i] {
+		if s == []rune(move)[i] {
 			grade[i] = Green
 			secret[i] = ' '
 		} else {
@@ -139,29 +141,26 @@ func (m Try) New(inSecret string) Try {
 		if s == ' ' {
 			continue
 		}
-		for i, m := range m.move {
+		for i, m := range move {
 			if m == s && grade[i] == Gray {
 				grade[i] = Yellow
 				break
 			}
 		}
 	}
-
-	m.grade = grade
-	return m
+	return grade
 }
 
-func (m Try) View(styles Styles) string {
-
-	var display strings.Builder
-	for index, letter := range m.move {
-		str := styles.CharGrade.Foreground(lipgloss.Color(m.grade[index])).Render(string(letter))
-		display.WriteString(str)
+func (m Play) displayMove(move string, grade []CharGrade) string {
+	var text strings.Builder
+	for index, letter := range move {
+		str := m.state.styles.CharGrade.Foreground(lipgloss.Color(grade[index])).Render(string(letter))
+		text.WriteString(str)
 	}
 
-	return styles.TryBox.Render(
+	return m.state.styles.MoveBox.Render(
 		lipgloss.JoinHorizontal(0,
-			styles.ColorBox.Background(lipgloss.Color("#"+m.move)).Render(),
-			display.String(),
+			m.state.styles.ColorBox.Background(lipgloss.Color("#"+move)).Render(),
+			text.String(),
 		))
 }

@@ -13,7 +13,7 @@ type Styles struct {
 	GameBox   lipgloss.Style
 	ColorBox  lipgloss.Style
 	InputBox  lipgloss.Style
-	TryBox    lipgloss.Style
+	MoveBox   lipgloss.Style
 	CharGrade lipgloss.Style
 	FormTheme *huh.Theme
 }
@@ -22,10 +22,10 @@ func (s Styles) New(r *lipgloss.Renderer, secret string) Styles {
 	return Styles{
 		Title:     r.NewStyle().Width(19).Bold(true),
 		Subtitle:  r.NewStyle().Foreground(lipgloss.Color("8")),
-		GameBox:   r.NewStyle().PaddingRight(1),
+		GameBox:   r.NewStyle(),
 		ColorBox:  r.NewStyle().Width(2).Height(1).Margin(0, 1),
 		InputBox:  r.NewStyle().Border(lipgloss.RoundedBorder()),
-		TryBox:    r.NewStyle().MarginTop(1),
+		MoveBox:   r.NewStyle().PaddingTop(1).PaddingRight(1),
 		CharGrade: r.NewStyle(),
 		FormTheme: makeFormTheme(r, secret),
 	}

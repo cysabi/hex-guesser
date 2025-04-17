@@ -57,6 +57,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			m.state.screen = m.Title.Form.Get("screen").(Screen)
 
+			m.state.SetName(m.Title.Form.Get("name").(string))
+
 			if m.state.screen == PlayScreen {
 				m.Play = m.Play.New()
 			}

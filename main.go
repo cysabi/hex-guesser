@@ -20,6 +20,7 @@ import (
 	"github.com/charmbracelet/wish/activeterm"
 	"github.com/charmbracelet/wish/bubbletea"
 	"github.com/charmbracelet/wish/logging"
+	"github.com/muesli/termenv"
 	"github.com/tidwall/buntdb"
 )
 
@@ -28,32 +29,8 @@ const (
 	port = "22"
 )
 
-// var names = make(Names)
-// type Names map[string](string)
-
-type Memory struct {
-	names map[string]string
-	board map[int64]map[string][]Try
-}
-
-func (m Memory) GetDay(day int64) map[string][]Try {
-	players, ok := m.board[day]
-	if !ok {
-		m.board[day] = map[string][]Try{}
-		players = m.board[day]
-	}
-	return players
-}
-
-func (m *Memory) AppendTry(day int64, playerid string, try Try) {
-	players := m.GetDay(day)
-	players[playerid] = append(players[playerid], try)
-	m.board[day] = players
-}
-
-var memory = &Memory{names: map[string]string{}, board: map[int64]map[string][]Try{}}
-
 type state struct {
+	db        *buntdb.DB
 	day       int64
 	secret    string
 	playerid  string
@@ -80,41 +57,54 @@ const (
 	BoardScreen Screen = "see leaderboard"
 )
 
+func appMiddleware(db *buntdb.DB) wish.Middleware {
+	newProg := func(m tea.Model, opts ...tea.ProgramOption) *tea.Program {
+		p := tea.NewProgram(m, opts...)
+		return p
+	}
+	teaHandler := func(s ssh.Session) *tea.Program {
+		pty, _, _ := s.Pty()
+
+		day := day()
+		secret := secret(day)
+		playerId := strings.Split(s.RemoteAddr().String(), ":")[0]
+
+		renderer := bubbletea.MakeRenderer(s)
+
+		state := state{
+			db:        db,
+			day:       day,
+			secret:    secret,
+			playerid:  playerId,
+			height:    pty.Window.Height,
+			width:     pty.Window.Width,
+			gameState: Idle,
+			screen:    TitleScreen,
+			styles:    Styles{}.New(renderer, secret),
+		}
+		if state.GetDone() {
+			state.gameState = Win
+		}
+
+		m := Model{state: &state}.New()
+
+		return newProg(m, append(bubbletea.MakeOptions(s), tea.WithAltScreen())...)
+	}
+	return bubbletea.MiddlewareWithProgramHandler(teaHandler, termenv.ANSI256)
+}
+
 func main() {
-	db, err := buntdb.Open("data.json")
+	db, err := buntdb.Open("data.db")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+	defer func() { db.Shrink(); db.Close() }()
 
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
 		wish.WithMiddleware(
-			bubbletea.Middleware(func(s ssh.Session) (tea.Model, []tea.ProgramOption) {
-				pty, _, _ := s.Pty()
-
-				day := day()
-				secret := secret(day)
-				playerId := strings.Split(s.RemoteAddr().String(), ":")[0]
-
-				renderer := bubbletea.MakeRenderer(s)
-
-				state := state{
-					day:       day,
-					secret:    secret,
-					playerid:  playerId,
-					height:    pty.Window.Height,
-					width:     pty.Window.Width,
-					gameState: Idle,
-					screen:    TitleScreen,
-					styles:    Styles{}.New(renderer, secret),
-				}
-
-				m := Model{state: &state}.New()
-
-				return m, []tea.ProgramOption{tea.WithAltScreen()}
-			}),
+			appMiddleware(db),
 			activeterm.Middleware(),
 			logging.Middleware(),
 		),
