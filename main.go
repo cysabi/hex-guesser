@@ -32,6 +32,7 @@ const (
 type state struct {
 	db            *buntdb.DB
 	day           int64
+	dayPage       int64
 	secret        string
 	playerid      string
 	height        int

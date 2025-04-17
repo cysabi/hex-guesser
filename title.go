@@ -31,7 +31,7 @@ func (m Title) New() Title {
 
 	form := huh.NewForm(
 		huh.NewGroup(
-			huh.NewInput().Key("name").Value(&username).CharLimit(20).Placeholder("what's ur name?").Prompt("? ").Validate(
+			huh.NewInput().Key("name").Value(&username).CharLimit(14).Placeholder("what's ur name?").Prompt("? ").Validate(
 				func(str string) error {
 					if len(str) == 0 {
 						return errors.New("what's ur name!?")

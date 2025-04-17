@@ -8,30 +8,36 @@ import (
 // styles
 
 type Styles struct {
-	Title     lipgloss.Style
-	Subtitle  lipgloss.Style
-	GameBox   lipgloss.Style
-	ColorBox  lipgloss.Style
-	InputBox  lipgloss.Style
-	MoveBox   lipgloss.Style
-	CharGrade lipgloss.Style
-	Disabled  lipgloss.Style
-	Error     lipgloss.Style
-	FormTheme *huh.Theme
+	Title       lipgloss.Style
+	Subtitle    lipgloss.Style
+	NormalText  lipgloss.Style
+	TableRight  lipgloss.Style
+	BoardArrows lipgloss.Style
+	GameBox     lipgloss.Style
+	ColorBox    lipgloss.Style
+	InputBox    lipgloss.Style
+	MoveBox     lipgloss.Style
+	CharGrade   lipgloss.Style
+	Disabled    lipgloss.Style
+	Error       lipgloss.Style
+	FormTheme   *huh.Theme
 }
 
 func (s Styles) New(r *lipgloss.Renderer, secret string) Styles {
 	return Styles{
-		Title:     r.NewStyle().Width(19).Bold(true),
-		Subtitle:  r.NewStyle().Foreground(lipgloss.Color("8")),
-		GameBox:   r.NewStyle(),
-		ColorBox:  r.NewStyle().Width(2).Height(1).Margin(0, 1),
-		InputBox:  r.NewStyle().Border(lipgloss.RoundedBorder()),
-		MoveBox:   r.NewStyle().PaddingTop(1).PaddingRight(1),
-		CharGrade: r.NewStyle(),
-		Disabled:  r.NewStyle().Strikethrough(true).Foreground(lipgloss.Color("8")),
-		Error:     r.NewStyle().Width(20).PaddingLeft(1).Foreground(lipgloss.Color("1")),
-		FormTheme: makeFormTheme(r, secret),
+		Title:       r.NewStyle().Width(19).Bold(true),
+		Subtitle:    r.NewStyle().Foreground(lipgloss.Color("8")),
+		NormalText:  r.NewStyle().Foreground(lipgloss.Color("7")),
+		TableRight:  r.NewStyle().Width(53).AlignHorizontal(lipgloss.Right),
+		BoardArrows: r.NewStyle().Foreground(lipgloss.Color("7")).Bold(true),
+		GameBox:     r.NewStyle(),
+		ColorBox:    r.NewStyle().Width(2).Height(1).Margin(0, 1),
+		InputBox:    r.NewStyle().Border(lipgloss.RoundedBorder()),
+		MoveBox:     r.NewStyle().PaddingTop(1).PaddingRight(1),
+		CharGrade:   r.NewStyle(),
+		Disabled:    r.NewStyle().Strikethrough(true).Foreground(lipgloss.Color("8")),
+		Error:       r.NewStyle().Width(20).PaddingLeft(1).Foreground(lipgloss.Color("1")),
+		FormTheme:   makeFormTheme(r, secret),
 	}
 }
 
