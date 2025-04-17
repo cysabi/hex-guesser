@@ -8,12 +8,6 @@
           "fromContainerPort": 22,
           "protocol": "tcp"
         }
-      ],
-      "volumes": [
-        {
-          "name": "store",
-          "destinationPath": "/store"
-        }
       ]
     }
   }
