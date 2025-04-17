@@ -39,10 +39,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Play.Viewport.Height = m.state.height - 10
 
 	case tea.KeyMsg:
-		m.state.showUpNext = false
+		m.state.showCountdown = false
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
+			if m.state.screen == TitleScreen {
+				return m, tea.Quit
+			}
+			m.state.screen = TitleScreen
+			m.Title = m.Title.New()
+			return m, nil
 		}
 	}
 
@@ -61,8 +66,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if newScreen == PlayScreen {
 				if m.state.GetDone() {
+					m.state.showCountdown = true
 					m.Title = m.Title.New()
-					m.state.showUpNext = true
 				} else {
 					m.state.screen = newScreen
 					m.Play = m.Play.New()
@@ -108,10 +113,10 @@ func (m Model) View() string {
 	switch m.state.screen {
 	case TitleScreen:
 		view := m.Title.View()
-		if m.state.showUpNext {
+		if m.state.showCountdown {
 			view = lipgloss.JoinVertical(0,
 				view,
-				m.state.styles.Error.Render("* next move in "+dist()))
+				m.state.styles.Error.Render("* opens in "+dist()))
 		}
 		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
 			lipgloss.JoinVertical(0.5, banner, view))

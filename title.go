@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
@@ -25,6 +24,9 @@ func (m Title) New() Title {
 
 	if m.state.GetDone() {
 		playOption.Key = m.state.styles.Disabled.Render(string(PlayScreen))
+		if !m.state.showCountdown {
+			boardOption = boardOption.Selected(true)
+		}
 	}
 
 	form := huh.NewForm(
@@ -45,9 +47,6 @@ func (m Title) New() Title {
 
 	if len(username) > 0 {
 		form.NextField()
-		if m.state.GetDone() {
-			boardOption.Selected(true)
-		}
 	}
 
 	m.Form = form
@@ -111,12 +110,4 @@ func dist() string {
 		}
 		return fmt.Sprintf("%d seconds", seconds)
 	}
-}
-
-func cropHeight(s string, height int) string {
-	lines := strings.Split(s, "\n")
-	if len(lines) > height {
-		return strings.Join(lines[:height], "\n")
-	}
-	return s
 }
