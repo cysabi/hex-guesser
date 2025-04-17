@@ -102,7 +102,7 @@ func (m Play) StateMsg() string {
 	if m.state.gameState == Invalid {
 		return "invalid hex"
 	} else if m.state.gameState == Win {
-		return fmt.Sprintf("you got it! (%d turns)", len(m.state.GetMoves())+1)
+		return fmt.Sprintf("you got it!! (%d turns)", len(m.state.GetMoves())+1)
 	}
 	return ""
 }

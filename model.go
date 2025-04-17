@@ -41,6 +41,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		m.state.showCountdown = false
+		if m.state.screen == PlayScreen && m.state.gameState == Win {
+			m.state.screen = TitleScreen
+			m.Title = m.Title.New()
+			return m, nil
+		}
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			if m.state.screen == TitleScreen {
@@ -102,13 +107,13 @@ func (m Model) View() string {
 	subtitle := m.state.styles.Subtitle.Render("day " + fmt.Sprint(m.state.day))
 	if m.state.screen == BoardScreen {
 		styl := m.state.styles.BoardArrows
-		subtitle = styl.Render("< ") + m.state.styles.Subtitle.Render("day "+fmt.Sprint(m.state.day+m.state.dayPage)) + styl.Render(" >")
+		subtitle = m.state.styles.Subtitle.Render(styl.Render("< ") + m.state.styles.BoardSubtitle.Render("day "+fmt.Sprint(m.state.day+m.state.dayPage)) + styl.Render(" >"))
 	} else if m.state.gameState != Idle {
 		subtitle = m.state.styles.Subtitle.Foreground(lipgloss.Color(m.state.gameState)).Render(m.Play.StateMsg())
 	}
 
 	banner := m.state.styles.CharGrade.Margin(2).Render(
-		lipgloss.JoinVertical(lipgloss.Center,
+		lipgloss.JoinVertical(0,
 			m.state.styles.Title.Foreground(lipgloss.Color("#"+m.state.secret)).Render("dailyhex!"),
 			subtitle,
 		),
@@ -119,7 +124,7 @@ func (m Model) View() string {
 		if m.state.showCountdown {
 			view = lipgloss.JoinVertical(0,
 				view,
-				m.state.styles.Error.Render("* opens in "+dist()))
+				m.state.styles.FormError.Render("* opens in "+dist()))
 		}
 		return lipgloss.Place(m.state.width, m.state.height, lipgloss.Center, lipgloss.Top,
 			lipgloss.JoinVertical(lipgloss.Center, banner, view))

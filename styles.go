@@ -8,36 +8,40 @@ import (
 // styles
 
 type Styles struct {
-	Title       lipgloss.Style
-	Subtitle    lipgloss.Style
-	NormalText  lipgloss.Style
-	TableRight  lipgloss.Style
-	BoardArrows lipgloss.Style
-	GameBox     lipgloss.Style
-	ColorBox    lipgloss.Style
-	InputBox    lipgloss.Style
-	MoveBox     lipgloss.Style
-	CharGrade   lipgloss.Style
-	Disabled    lipgloss.Style
-	Error       lipgloss.Style
-	FormTheme   *huh.Theme
+	Title         lipgloss.Style
+	Subtitle      lipgloss.Style
+	FormBox       lipgloss.Style
+	NormalText    lipgloss.Style
+	TableRight    lipgloss.Style
+	BoardSubtitle lipgloss.Style
+	BoardArrows   lipgloss.Style
+	GameBox       lipgloss.Style
+	ColorBox      lipgloss.Style
+	InputBox      lipgloss.Style
+	MoveBox       lipgloss.Style
+	CharGrade     lipgloss.Style
+	Disabled      lipgloss.Style
+	FormError     lipgloss.Style
+	FormTheme     *huh.Theme
 }
 
 func (s Styles) New(r *lipgloss.Renderer, secret string) Styles {
 	return Styles{
-		Title:       r.NewStyle().Bold(true),
-		Subtitle:    r.NewStyle().Foreground(lipgloss.Color("8")),
-		NormalText:  r.NewStyle().Foreground(lipgloss.Color("7")),
-		TableRight:  r.NewStyle().Width(53).AlignHorizontal(lipgloss.Right),
-		BoardArrows: r.NewStyle().Foreground(lipgloss.Color("7")).Bold(true),
-		GameBox:     r.NewStyle().Width(21),
-		ColorBox:    r.NewStyle().Width(2).Height(1).Margin(0, 1),
-		InputBox:    r.NewStyle().Border(lipgloss.RoundedBorder()),
-		MoveBox:     r.NewStyle().PaddingTop(1),
-		CharGrade:   r.NewStyle(),
-		Disabled:    r.NewStyle().Strikethrough(true).Foreground(lipgloss.Color("8")),
-		Error:       r.NewStyle().Width(21).PaddingLeft(1).Foreground(lipgloss.Color("1")),
-		FormTheme:   makeFormTheme(r, secret),
+		Title:         r.NewStyle().Width(23).AlignHorizontal(lipgloss.Center).Bold(true),
+		Subtitle:      r.NewStyle().Width(23).AlignHorizontal(lipgloss.Center).Foreground(lipgloss.Color("8")),
+		NormalText:    r.NewStyle().Foreground(lipgloss.Color("7")),
+		TableRight:    r.NewStyle().Width(53).AlignHorizontal(lipgloss.Right),
+		BoardSubtitle: r.NewStyle().Foreground(lipgloss.Color("8")),
+		BoardArrows:   r.NewStyle().Foreground(lipgloss.Color("7")).Bold(true),
+		GameBox:       r.NewStyle().Width(23),
+		ColorBox:      r.NewStyle().Width(2).Height(1).Margin(0, 1),
+		InputBox:      r.NewStyle().Border(lipgloss.RoundedBorder()),
+		MoveBox:       r.NewStyle().PaddingTop(1),
+		CharGrade:     r.NewStyle(),
+		Disabled:      r.NewStyle().Strikethrough(true).Foreground(lipgloss.Color("8")),
+		FormBox:       r.NewStyle().Width(23).PaddingLeft(2),
+		FormError:     r.NewStyle().Width(21).PaddingLeft(1).Foreground(lipgloss.Color("1")),
+		FormTheme:     makeFormTheme(r, secret),
 	}
 }
 

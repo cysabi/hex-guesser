@@ -69,12 +69,12 @@ func (m Title) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Title) View() string {
 	errs := m.Form.Errors()
 	if len(errs) > 0 {
-		return lipgloss.JoinVertical(0,
+		return m.state.styles.FormBox.Render(lipgloss.JoinVertical(0,
 			m.Form.View(),
-			m.state.styles.Error.Render("* "+errs[0].Error()),
-		)
+			m.state.styles.FormError.Render("* "+errs[0].Error()),
+		))
 	} else {
-		return m.Form.View()
+		return m.state.styles.FormBox.Render(m.Form.View())
 	}
 
 }
