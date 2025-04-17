@@ -11,8 +11,8 @@
       ],
       "volumes": [
         {
-          "name": "db",
-          "destinationPath": "/db"
+          "name": "store",
+          "destinationPath": "/store"
         }
       ]
     }

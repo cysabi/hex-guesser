@@ -98,7 +98,7 @@ func appMiddleware(db *buntdb.DB) wish.Middleware {
 }
 
 func main() {
-	db, err := buntdb.Open("db/data.db")
+	db, err := buntdb.Open("store/data.db")
 	if err != nil {
 		log.Fatal(err)
 	}
