@@ -147,7 +147,10 @@ func day() int64 {
 }
 
 func secret(day int64) string {
-	input := []byte("secret::" + fmt.Sprint(day))
-	hash := sha256.Sum256(input)
+	file, err := os.ReadFile("store/ssh_id_ed25519")
+	if err != nil {
+		log.Fatal(err)
+	}
+	hash := sha256.Sum256(fmt.Append(file, day))
 	return hex.EncodeToString(hash[:3])
 }
