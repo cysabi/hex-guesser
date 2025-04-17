@@ -106,7 +106,7 @@ func main() {
 
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
-		wish.WithHostKeyPath(".ssh/id_ed25519"),
+		wish.WithHostKeyPath("store/ssh_id_ed25519"),
 		wish.WithMiddleware(
 			appMiddleware(db),
 			activeterm.Middleware(),
